@@ -1,0 +1,16 @@
+#statusIndicator {
+	float: left;
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background: #ccc;
+	margin-right: 20px;
+}
+
+#log {
+	max-width: 600px;
+	height: 400px;
+	overflow-y: auto;
+	border: 1px solid black;
+	padding: 15px;
+}

@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="de">
+	<head>
+    <meta charset="UTF-8">
+    <title>Leap Gestures</title>
+    <link rel="stylesheet" href="style.css"/>
+	</head>
+	<body>
+		
+		<div id="wrapper">
+			<h1>Leap Gestures</h1>
+			<p>You need a Leap-Motion and its SDK to try this demo.</p>
+			<h2>Gesture Log:</h2>
+			<div id="log"></div>
+		
+			<h2>Status:</h2>
+			<div id="statusIndicator"></div>
+			<p id="status"></p>
+		</div>
+		
+
+		<script src="bower_components/leapjs/leap-0.6.0.min.js"></script>
+		<script src="leap-gestures.js"></script>
+
+		<script>
+			
+			var indicatorTimeout;
+			
+			/*
+			 *  The "status changed" function gets fired everytime one of the following happens:
+			 *  
+			 *  * The Leap gets connected / disconnected
+			 *  * A gesture is not detected (= confidence under the threshold)
+			 *  * A gesture is detected
+			 */
+			function statusChanged(e) {
+				if(e.type == "gesture") {
+					if(e.recognized) {
+						document.getElementById("statusIndicator").style.background = "green";
+					} else {
+						console.log(e.message);
+						document.getElementById("statusIndicator").style.background = "orange";
+						indicatorTimeout = setTimeout(function() {
+							if(leapGestures.isConnected()) {
+								document.getElementById("statusIndicator").style.background = "green";
+							} else {
+								document.getElementById("statusIndicator").style.background = "red";
+							}
+						}, 2000);
+					}
+				}
+				
+				if(e.type == "connection") {
+					if(e.connected) {
+						console.log("Leap has been connected!");
+						document.getElementById("statusIndicator").style.background = "green";
+					}
+					else {
+						console.log("Leap has been disconnected!");
+						document.getElementById("statusIndicator").style.background = "red";
+					}
+				}
+				
+				document.getElementById("status").innerHTML = e.message;
+			}
+			
+			function swipeLeft(e) {
+				console.log("--- SWIPE LEFT ---");
+				console.log(e);
+				document.getElementById("log").innerHTML += "Swipe Left<br/>";
+			}
+			
+			function swipeRight(e) {
+				console.log("--- SWIPE RIGHT ---");
+				console.log(e);
+				document.getElementById("log").innerHTML += "Swipe Right<br/>";
+			}
+			function swipeUp(e) {
+				console.log("--- SWIPE UP ---");
+				console.log(e);
+				document.getElementById("log").innerHTML += "Swipe Up<br/>";
+			}
+			function swipeDown(e) {
+				console.log("--- SWIPE DOWN ---");
+				console.log(e);
+				document.getElementById("log").innerHTML += "Swipe Down<br/>";
+			}
+			function circle(e) {
+				console.log("--- CIRCLE ---");
+				console.log(e);
+				document.getElementById("log").innerHTML += "Circle<br/>";
+			}
+			function clap(e) {
+				console.log("--- CLAP ---");
+				console.log(e);
+				document.getElementById("log").innerHTML += "Clap<br/>";
+			}
+			function hand(e) {
+				if(e.fingers == 0) {
+					console.log("--- FIST ---");
+					document.getElementById("log").innerHTML += "Fist<br/>";
+				} else {
+					console.log("--- "+e.fingers + " FINGERS ---");
+					document.getElementById("log").innerHTML += e.fingers +" Fingers<br/>";
+				}
+				console.log(e);
+			}
+
+			// Test Configuration
+			config = {
+				// Event handles for recognized gestures
+				swipeLeft: swipeLeft,
+				swipeRight: swipeRight,
+				swipeUp: swipeUp,
+				swipeDown: swipeDown,
+				circle: null,
+				hand: hand,
+				clap: clap,
+				statusChanged: statusChanged, // gets called when the status changes
+				
+				preventBackForth: true, // This enables users to continuously swipe in one direction.
+				confidenceThreshold: 0.15, // Gestures with a confidence lower than this are ignored
+				handDuration: 1500, // How long a fist has to be kept to trigger the event (in ms)
+			};
+
+			var leapGestures = new LeapGestures(config);
+		</script>
+
+	</body>
+</html>

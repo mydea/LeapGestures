@@ -1,0 +1,25 @@
+{
+  "name": "leap-gestures",
+  "version": "0.1.0",
+  "description": "A small JavaScript module to enable gesture control via Leap Motion.",
+  "keywords": [
+    "leap motion",
+    "leap",
+		"gestures"
+  ],
+  "main": [
+    "leap-gestures.js"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "components",
+    "nbproject"
+  ],
+  "license": [
+    "MIT"
+  ],
+  "devDependencies": {
+    "leapjs": "~0.6.0"
+  }
+}
