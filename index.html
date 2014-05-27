@@ -106,14 +106,35 @@
 				console.log(e);
 			}
 
-			// Test Configuration
+			/*
+			 * Another way to achieve the same is to use controller events: 
+			 
+			var config = {
+				useControllerEvents: true,
+				preventBackForth: true,
+				confidenceThreshold: 0.15,
+				handDuration: 1500
+			}
+			var leapGestures = new LeapGestures(config);
+			var c = leapGestures.getLeapController();
+			c.on("gestureSwipeLeft", swipeLeft);
+			c.on("gestureSwipeRight", swipeRight);
+			c.on("gestureSwipeDown", swipeDown);
+			c.on("gestureSwipeUp", swipeUp);
+			c.on("gestureClap", clap);
+			c.on("gestureHand", hand);
+			c.on("gestureCircle", circle);
+			c.on("statusChanged", statusChanged);
+	
+			*/
+			
 			config = {
 				// Event handles for recognized gestures
 				swipeLeft: swipeLeft,
 				swipeRight: swipeRight,
 				swipeUp: swipeUp,
 				swipeDown: swipeDown,
-				circle: null,
+				circle: circle,
 				hand: hand,
 				clap: clap,
 				statusChanged: statusChanged, // gets called when the status changes

@@ -1,5 +1,6 @@
 /*!
- * G-Mote
+ * Leap Gestures
+ * v0.2.0
  *
  * Copyright © 2014 Francesco Novy | MIT license
  */
@@ -38,7 +39,8 @@
 		var _options = self.config(options);
 		var _deferTimer = null, _lastGesture = null, _gestureSpeedCummulated = 0,
 						_gestureDistance = [0, 0, 0], _gestureCount = 0, _nextGesture = null,
-						_lastGestureTimestamp = 0, _fingerCount = null, _lastHandTimestamp;
+						_lastGestureTimestamp = 0, _fingerCount = null, _lastHandTimestamp,
+						_deferBlocked = false;
 
 		self._isConnected;
 		self._controller = null;
@@ -46,10 +48,6 @@
 		self._debugOptions = function() {
 			console.log(_options);
 			return _options;
-		};
-
-		self._testLeft = function() {
-			_options["swipeLeft"]();
 		};
 
 		self._leapConnected = function() {
@@ -173,7 +171,8 @@
 				// Circle
 				obj = {
 					gesture: "circle",
-					clockwise: clockwise
+					clockwise: clockwise,
+					originalGesture: _nextGesture
 				};
 				
 				statusObj = {
@@ -186,23 +185,7 @@
 
 				_options["circle"](obj);
 				return;
-			} else if (_nextGesture.type == "fist") {
-				// Circle
-				obj = {
-					gesture: "fist"
-				};
-
-				statusObj = {
-					type: "gesture",
-					recognized: true,
-					message: "A gesture has been recognized correctly.",
-					gesture: "fist"
-				};
-				_options["statusChanged"](statusObj);
-
-				_options["fist"](obj);
-				return;
-			}
+			} 
 
 			//console.log(_lastGesture);
 			switch (_nextGesture.swipeDirection) {
@@ -235,7 +218,8 @@
 					gesture: "swipe",
 					distance: parseFloat(dist.toFixed(4)),
 					speed: parseFloat(speed.toFixed(4)),
-					direction: swipeDirection
+					direction: swipeDirection,
+					originalGesture: _nextGesture
 				};
 
 				statusObj = {
@@ -259,13 +243,23 @@
 		self._clap = function(frame) {
 			_lastHandTimestamp = new Date().getTime();
 			
+			// If not throttled, clap
+			if(!_deferBlocked) {
+				self._clapCall();
+				_deferBlocked = true;
+			}
+			
 			clearTimeout(_deferTimer);
-			_deferTimer = setTimeout(self._clapCall, 150);
+			_deferTimer = setTimeout(self._clapReset, 150);
+		};
+		
+		self._clapReset = function() {
+			_deferBlocked = false;
 		};
 		
 		self._clapCall = function() {
 			var obj = {
-				gesture: "clap",
+				gesture: "clap"
 			};
 			
 			statusObj = {
@@ -313,10 +307,45 @@
 			_options["hand"](obj);
 			_fingerCount = null;
 		};
+		
+		self._initControllerEvents = function() {
+			_options["swipeLeft"] = function(e) {
+				self._controller.emit("gestureSwipeLeft", e);
+			};
+			_options["swipeRight"] = function(e) {
+				self._controller.emit("gestureSwipeRight", e);
+			};
+			_options["swipeDown"] = function(e) {
+				self._controller.emit("gestureSwipeDown", e);
+			};
+			_options["swipeUp"] = function(e) {
+				self._controller.emit("gestureSwipeUp", e);
+			};
+			_options["circle"] = function(e) {
+				self._controller.emit("gestureCircle", e);
+			};
+			_options["hand"] = function(e) {
+				self._controller.emit("gestureHand", e);
+			};
+			_options["clap"] = function(e) {
+				self._controller.emit("gestureClap", e);
+			};
+			_options["statusChanged"] = function(e) {
+				self._controller.emit("statusChanged", e);
+			};
+		};
 
 		self._initLeapLoop = function() {
-			self._controller = Leap.loop({enableGestures: true}, function(frame) {
-
+			// Init Controller
+			var c = (_options["controller"] != null) ? _options["controller"] : new Leap.Controller({
+				enableGestures: true,
+				frameEventName: 'animationFrame',
+			});
+			
+			self._controller = c;
+			c.connect();
+			
+			c.on("frame", function(frame) {
 				// swipe or circle
 				if (frame.gestures.length > 0) {
 					frame.gestures.forEach(function(gesture) {
@@ -375,7 +404,7 @@
 				}
 				
 				// clap
-				else if(_options.clap !== null && frame.hands.length == 2) {
+				else if( (_options.clap !== null) && frame.hands.length == 2) {
 					var hand1 = frame.hands[0];
 					var hand2 = frame.hands[1];
 					
@@ -396,7 +425,7 @@
 				}
 				
 				// grab & fist
-				if(_options.hand !== null && frame.gestures.length == 0 && frame.hands.length > 0) {
+				else if( (_options.hand !== null) && frame.gestures.length == 0 && frame.hands.length > 0) {
 					var hand = frame.hands[0];
 					
 					// Grab
@@ -420,11 +449,12 @@
 					}
 				}
 			});
-
+		
 			self._controller.on("streamingStarted", self._leapConnected);
 			self._controller.on("streamingStopped", self._leapDisconnected);
 		};
-
+		
+		if(_options.useControllerEvents) self._initControllerEvents();
 		self._initLeapLoop();
 	};
 
@@ -481,6 +511,12 @@
 				options.handDuration = 1000;
 			} else {
 				options.handDuration = parseInt(options.handDuration);
+			}
+			if(typeof options.controller != "object") {
+				options.controller = null;
+			}
+			if(typeof options.useControllerEvents != "boolean") {
+				options.useControllerEvents = false;
 			}
 
 			return options;
