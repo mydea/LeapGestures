@@ -250,7 +250,7 @@
 			}
 			
 			clearTimeout(_deferTimer);
-			_deferTimer = setTimeout(self._clapReset, 150);
+			_deferTimer = setTimeout(self._clapReset, 250);
 		};
 		
 		self._clapReset = function() {
